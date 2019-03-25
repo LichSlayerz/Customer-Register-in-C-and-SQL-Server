@@ -1,0 +1,14 @@
+CREATE DATABASE ORDEM_SERVICOS2DS
+GO
+USE ORDEM_SERVICOS2DS
+
+GO
+CREATE TABLE CLIENTE
+(
+ Id int Identity Primary Key,
+ Nome varchar(50) not null,
+ Cidade varchar(50) not null,
+ Estado varchar(2) not null,
+ Telefone varchar(20) not null,
+ Ativo bit not null
+)
