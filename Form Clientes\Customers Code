@@ -1,0 +1,208 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace OrdemDeServiço1._0
+{
+    public partial class frmUsuarios : Form
+    {
+        SqlConnection conexao = new SqlConnection();
+        String Strconexao = "Data Source=LocalHost\\SQLEXPRESS;Initial Catalog=ORDEM_SERVICOS2DS;Persist Security Info=True;User ID=sa;Password=aluno";
+        SqlCommand cmd = new SqlCommand();
+        SqlDataReader Dr;
+        DataTable DtUsuarios = new DataTable();
+
+        public frmUsuarios()
+        {
+            InitializeComponent();
+        }
+
+        private void MontarLista(string sNome)
+        {
+            conexao.ConnectionString = Strconexao;
+            cmd.CommandText = "SELECT * FROM USUARIOS WHERE NOME LIKE @Nome ORDER BY NOME";
+            cmd.Connection = conexao;
+
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@Nome", "%" + sNome + "%");
+
+            conexao.Open();
+            cmd.CommandType = CommandType.Text;
+            Dr = cmd.ExecuteReader();
+            DtUsuarios.Clear();
+            DtUsuarios.Load(Dr);
+            dgLista.DataSource = DtUsuarios;
+            conexao.Close();
+
+
+        }
+
+        private void LimparFormulario()
+        {
+            txtNome.Clear(); txtSenha.Clear(); cmbTipo.SelectedIndex = -1;
+        }
+
+        private void frmUsuarios_Load(object sender, EventArgs e)
+        {
+            MontarLista("");
+        }
+
+        private void txtFiltrar_TextChanged(object sender, EventArgs e)
+        {
+            MontarLista(txtFiltrar.Text);
+        }
+
+        private void dgLista_RowEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                txtId.Text = dgLista.SelectedRows[0].Cells[0].Value.ToString();
+                txtNome.Text = dgLista.SelectedRows[0].Cells[1].Value.ToString();
+                txtSenha.Text = dgLista.SelectedRows[0].Cells[2].Value.ToString();
+                cmbTipo.Text = dgLista.SelectedRows[0].Cells[3].Value.ToString();
+
+                btnExcluir.Enabled = true; btnSalvar.Enabled = true; btnNovo.Enabled = true;
+            }
+
+            catch { }
+        }
+
+        private void btnExcluir_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Tem Certeza que Deseja Excluir o Registro?", "Atenção", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                conexao.ConnectionString = Strconexao;
+                cmd.Connection = conexao;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "DELETE FROM USUARIOS WHERE ID = @Id";
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@Id", txtId.Text);
+
+                try
+                {
+                    conexao.Open();
+                    cmd.ExecuteNonQuery();
+                    conexao.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message.ToString(), "Atenção!");
+                }
+                finally
+                {
+                    if (conexao.State == ConnectionState.Open)
+                    {
+                        conexao.Close();
+                        MessageBox.Show("Registro excluido com Sucesso!");
+                        MontarLista("");
+                        LimparFormulario();
+                    }
+
+                }
+
+            }
+        }
+
+        private void btnSalvar_Click(object sender, EventArgs e)
+        {
+            conexao.ConnectionString = Strconexao;
+            cmd.Connection = conexao;
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = @"UPDATE USUARIOS SET NOME = @Nome, SENHA=@Senha, TIPOUSUARIO=@TipoUsuario WHERE ID=@Id";
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@Id", txtId.Text);
+            cmd.Parameters.AddWithValue("@Nome", txtNome.Text);
+            cmd.Parameters.AddWithValue("@Senha", txtSenha.Text);
+            cmd.Parameters.AddWithValue("@TipoUsuario", cmbTipo.Text);
+            
+
+            try
+            {
+                conexao.Open();
+                cmd.ExecuteNonQuery();
+                conexao.Close();
+            }
+
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString(), "Atenção!");
+            }
+
+            finally
+            {
+                if (conexao.State == ConnectionState.Open)
+                {
+                    conexao.Close();
+                    MessageBox.Show("Registro Salvo com Sucesso!");
+                    MontarLista("");
+                    LimparFormulario();
+                }
+            }
+        }
+
+        private void btnIncluir_Click(object sender, EventArgs e)
+        {
+            if (txtId.Text == "")
+            {
+                MessageBox.Show("Campo Obrigatório!", "Atenção!");
+                txtId.Focus();
+                return;
+            }
+
+            if (txtNome.Text == "")
+            {
+                MessageBox.Show("Campo Obrigatório!", "Atenção!");
+                txtNome.Focus();
+                return;
+            }
+
+            conexao.ConnectionString = Strconexao;
+            cmd.Connection = conexao;
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = @"INSERT INTO USUARIOS  (NOME, SENHA, TIPOUSUARIO) VALUES (@Nome, @Senha, @TipoUsuario)";
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@Id", txtId.Text);
+            cmd.Parameters.AddWithValue("@Nome", txtNome.Text);
+            cmd.Parameters.AddWithValue("@Senha", txtSenha.Text);
+            cmd.Parameters.AddWithValue("@TipoUsuario", cmbTipo.Text);
+            
+
+            try
+            {
+                conexao.Open();
+                cmd.ExecuteNonQuery();
+                conexao.Close();
+            }
+
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString(), "Atenção!");
+            }
+
+            finally
+            {
+                if (conexao.State == ConnectionState.Open)
+                {
+                    conexao.Close();
+                    MessageBox.Show("Registro Incluido com Sucesso!");
+                    MontarLista("");
+                    LimparFormulario();
+
+                }
+            }
+        }
+
+        private void btnNovo_Click(object sender, EventArgs e)
+        {
+            LimparFormulario();
+            btnIncluir.Enabled = true;
+        }
+    }
+}
